@@ -32,7 +32,7 @@ def get_reviewer_data(reviewer_name, db_file="pr_data.db"):
     return rows
 
 def main():
-    reviewer = "nikic"  # Change to the reviewer you want to query
+    reviewer = "mizvekov"  # Change to the reviewer you want to query
     data = get_reviewer_data(reviewer)
     
     if not data:

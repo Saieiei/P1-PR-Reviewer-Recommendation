@@ -60,7 +60,7 @@ def get_all_pull_requests(token, owner, repo, state="all", verify_ssl=True):
     return pull_requests
 
 def main():
-    github_token = ""  # Make sure this is correct and properly scoped!
+    github_token = "ghp"  # Make sure this is correct and properly scoped!
     owner = "llvm"
     repo = "llvm-project"
 

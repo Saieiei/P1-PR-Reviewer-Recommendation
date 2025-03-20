@@ -11,7 +11,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # ==============================
 #  CONFIGURE THESE VALUES
 # ==============================
-GITHUB_TOKEN = ""     # Replace with your actual GitHub token
+GITHUB_TOKEN = "ghp"     # Replace with your actual GitHub token
 OWNER = "llvm"                       # Repository owner
 REPO = "llvm-project"                # Repository name
 DATABASE_FILE = "pr_data.db"         # SQLite database file

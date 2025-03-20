@@ -1,1 +1,1 @@
-set GITHUB_TOKEN=
+set GITHUB_TOKEN=github
