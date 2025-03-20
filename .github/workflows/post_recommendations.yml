@@ -1,0 +1,33 @@
+name: Post Reviewer Recommendations
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  recommend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas networkx pyyaml openpyxl requests
+
+      - name: Run Recommendation Script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_OWNER: Saieiei
+          GITHUB_REPO: PR-Reviewer-Recommendation
+        run: |
+          # Pass PR number, tags, and files as command-line arguments.
+          # Adjust the --tags and --files values as needed.
+          python recommendation.py --pr_number ${{ github.event.pull_request.number }} --tags "clang,frontend" --files "src/main.c,include/header.h"
