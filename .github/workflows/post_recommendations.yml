@@ -20,6 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install scipy
           pip install pandas networkx pyyaml openpyxl requests scipy
 
       - name: Run Recommendation Script
