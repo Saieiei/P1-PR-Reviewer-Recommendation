@@ -15,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
+          python-version: '3.11'  # Use 3.10 or 3.11 to get SciPy prebuilt wheels
 
       - name: Install dependencies
         run: |
