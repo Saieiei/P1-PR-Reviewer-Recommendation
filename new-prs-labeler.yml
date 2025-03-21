@@ -15,7 +15,7 @@ clang:dataflow:
   - clang/docs/DataFlowAnalysisIntroImages/**/*
 
 clang:frontend:
-  - clang/lib/AST/**/*
+  - clang/lib/ast/**/*
   - clang/include/clang/AST/**/*
   - clang/lib/Basic/**/*
   - clang/include/clang/Basic/**/*
