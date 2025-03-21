@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   recommend:
     runs-on: ubuntu-22.04
@@ -15,7 +19,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'  # Use 3.10 or 3.11 to get SciPy prebuilt wheels
+          python-version: '3.11'
 
       - name: Check Python Version
         run: python --version
@@ -23,8 +27,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install scipy
-          pip install scipy pandas networkx pyyaml openpyxl requests 
+          pip install pandas networkx pyyaml openpyxl requests scipy
 
       - name: Run Recommendation Script
         env:
@@ -32,6 +35,5 @@ jobs:
           GITHUB_OWNER: Saieiei
           GITHUB_REPO: PR-Reviewer-Recommendation
         run: |
-          # Pass PR number, tags, and files as command-line arguments.
-          # Adjust the --tags and --files values as needed.
-          python recommendation.py --pr_number ${{ github.event.pull_request.number }} --tags "clang,frontend" --files "src/main.c,include/header.h"
+          # The updated recommendation.py automatically fetches the PR's labels and changed files.
+          python recommendation.py --pr_number ${{ github.event.pull_request.number }}
