@@ -39,8 +39,7 @@ def get_pr_labels(pr_number):
 
 def get_pr_changed_files(pr_number):
     """
-    Fetch the list of changed files in the PR from GitHub,
-    and return a set of filenames (in lowercase).
+    Fetch the list of changed files in the PR from GitHub and return a set of filenames (in lowercase).
     """
     token = os.environ.get("GITHUB_TOKEN")
     owner = os.environ.get("GITHUB_OWNER")
@@ -61,13 +60,14 @@ def get_pr_changed_files(pr_number):
     return {f.get("filename", "").strip().lower() for f in files_data if f.get("filename")}
 
 # -------------------------------------------------
-# Auto-assign labels from YAML mapping
+# Auto-assign labels from YAML mapping (flatten nested patterns)
 # -------------------------------------------------
 
 def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml"):
     """
-    Check each file in changed_files against patterns in new-prs-labeler.yml.
-    Return a set of labels (lowercased) that match.
+    For each file in changed_files, check if it matches any pattern in the YAML mapping.
+    This function supports nested patterns (e.g., a dict with an "any" key).
+    Returns a set of assigned labels (lowercased).
     """
     assigned_labels = set()
     try:
@@ -76,12 +76,26 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
     except FileNotFoundError:
         print(f"WARNING: {yaml_path} not found. Skipping auto label assignment.")
         return assigned_labels
+
     for label, patterns in label_mapping.items():
-        for pattern in patterns:
+        flat_patterns = []
+        # Flatten the patterns list: if an element is a string, use it;
+        # if it's a dict, iterate over its values (which are expected to be lists of strings).
+        for p in patterns:
+            if isinstance(p, str):
+                flat_patterns.append(p)
+            elif isinstance(p, dict):
+                for key, value in p.items():
+                    if isinstance(value, list):
+                        for item in value:
+                            if isinstance(item, str):
+                                flat_patterns.append(item)
+        # For each flattened pattern, check if any changed file matches.
+        for pattern in flat_patterns:
             for file_path in changed_files:
                 if fnmatch.fnmatch(file_path, pattern):
                     assigned_labels.add(label.strip().lower())
-                    break
+                    break  # No need to check other files for this pattern.
     return assigned_labels
 
 # -------------------------------------------------
@@ -90,8 +104,8 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
 
 def update_missing_labels(db_path="pr_data.db", yaml_path="new-prs-labeler.yml"):
     """
-    For each PR in the DB with missing labels, try to fill them by matching file paths
-    with patterns from new-prs-labeler.yml. (For older PRs in your DB.)
+    For each PR in the DB with missing labels, attempt to fill them by matching
+    file paths with patterns from new-prs-labeler.yml.
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -107,8 +121,19 @@ def update_missing_labels(db_path="pr_data.db", yaml_path="new-prs-labeler.yml")
         file_rows = cursor.fetchall()
         file_paths = [row[0] for row in file_rows if row[0]]
         matched_labels = set()
+        # Use the same flattening approach as above.
         for label, patterns in label_mapping.items():
-            for pattern in patterns:
+            flat_patterns = []
+            for p in patterns:
+                if isinstance(p, str):
+                    flat_patterns.append(p)
+                elif isinstance(p, dict):
+                    for key, value in p.items():
+                        if isinstance(value, list):
+                            for item in value:
+                                if isinstance(item, str):
+                                    flat_patterns.append(item)
+            for pattern in flat_patterns:
                 for file_path in file_paths:
                     if fnmatch.fnmatch(file_path, pattern):
                         matched_labels.add(label)
@@ -273,23 +298,23 @@ def main():
     parser.add_argument("--db_path", type=str, default="pr_data.db", help="Path to the database file")
     args = parser.parse_args()
 
-    # Automatically fetch the PR's labels and changed files from GitHub.
+    # Fetch PR labels and changed files using GitHub API.
     fetched_labels = get_pr_labels(args.pr_number)
     changed_files = get_pr_changed_files(args.pr_number)
     
     print("Fetched PR labels from GitHub:", fetched_labels)
     print("Fetched PR changed files from GitHub:", changed_files)
     
-    # If there are no labels fetched, try to auto-assign them based on file patterns.
+    # If no labels were found on the PR, auto-assign them using YAML mapping.
     auto_labels = auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
     if not fetched_labels:
         new_tags = auto_labels
-        print("No labels found in PR; using auto-assigned labels:", new_tags)
+        print("No labels found on PR; using auto-assigned labels:", new_tags)
     else:
         new_tags = fetched_labels.union(auto_labels)
         print("Combined PR labels (fetched + auto-assigned):", new_tags)
     
-    # Use the changed files as new_files.
+    # For the changed files, use them directly.
     new_files = changed_files
 
     # Optionally update missing labels in your DB for older PRs.
@@ -299,13 +324,13 @@ def main():
     prs_df, files_df, reviews_df = load_data(db_path=args.db_path)
     print("Data loaded from", args.db_path)
     
-    # Build reviewer data from historical records.
+    # Build reviewer data.
     reviewer_pr_data = build_reviewer_pr_data(prs_df, files_df, reviews_df)
     if not reviewer_pr_data:
         print("No reviewer PR data found. Exiting.")
         return
     
-    # Compute reviewer graph and PageRank.
+    # Build reviewer graph and compute PageRank.
     G = build_reviewer_graph(reviews_df)
     pagerank_scores = nx.pagerank(G, alpha=0.85, weight="weight")
     print("PageRank scores computed.")
@@ -314,11 +339,11 @@ def main():
     activity_scores = compute_dynamic_activity_scores(reviews_df, tau=30)
     print("Dynamic activity scores computed.")
     
-    # Rank reviewers using the new tags and changed files.
+    # Rank reviewers.
     ranked_reviewers = rank_reviewers(new_tags, new_files, reviewer_pr_data, pagerank_scores, activity_scores,
                                       w1=1, w2=2, weight_sim_act=1.0, gamma=0.2, delta=0.001, db_path=args.db_path)
     
-    # Build comment body.
+    # Build the comment.
     comment_lines = ["**Reviewer Recommendations:**"]
     for i, (rev, raw_abs, norm_abs, act_score, pr_score, fav_points, norm_fav, final_score) in enumerate(ranked_reviewers[:15], start=1):
         line = (f"{i}. **{rev}** | abs_match: {raw_abs}, norm_abs: {norm_abs:.4f}, "
@@ -328,7 +353,7 @@ def main():
     comment_lines.append("\n_To provide feedback, comment with `/feedback reviewer_username`._")
     comment_body = "\n".join(comment_lines)
     
-    print("Final comment body:\n", comment_body)  # Debug output
+    print("Final comment body:\n", comment_body)  # Debug print
     post_comment(args.pr_number, comment_body)
 
 if __name__ == "__main__":
