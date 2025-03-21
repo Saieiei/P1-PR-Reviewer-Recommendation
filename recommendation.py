@@ -15,8 +15,7 @@ from datetime import datetime
 # --------------------------
 def get_pr_labels(pr_number):
     """
-    Fetch the PR details and extract the labels.
-    Returns a set of label names in lowercase.
+    Fetch PR details from GitHub and return the set of label names (in lowercase).
     """
     token = os.environ.get("GITHUB_TOKEN")
     owner = os.environ.get("GITHUB_OWNER")
@@ -32,13 +31,13 @@ def get_pr_labels(pr_number):
         return set()
     pr_data = response.json()
     labels = pr_data.get("labels", [])
-    # Collect label names into a set (lowercase)
+    # Return a set of label names in lowercase.
     return {label.get("name", "").strip().lower() for label in labels if label.get("name")}
 
 def get_pr_changed_files(pr_number):
     """
-    Fetch the list of files changed in the PR.
-    Returns a set of filenames.
+    Fetch the list of changed files in the PR.
+    Returns a set of filenames (lowercased).
     """
     token = os.environ.get("GITHUB_TOKEN")
     owner = os.environ.get("GITHUB_OWNER")
@@ -56,9 +55,8 @@ def get_pr_changed_files(pr_number):
     return {file_obj.get("filename", "").strip().lower() for file_obj in files_data if file_obj.get("filename")}
 
 # --------------------------
-# Functions from existing code (non-interactive)
+# Functions from your existing code (non-interactive)
 # --------------------------
-
 def update_missing_labels(db_path="pr_data.db", yaml_path="new-prs-labeler.yml"):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -239,14 +237,15 @@ def main():
     parser.add_argument("--db_path", type=str, default="pr_data.db", help="Path to the database file")
     args = parser.parse_args()
 
-    # Fetch PR labels and changed files automatically from GitHub
+    # Automatically fetch the new PR's labels and changed files from GitHub API.
     new_tags = get_pr_labels(args.pr_number)
     new_files = get_pr_changed_files(args.pr_number)
 
+    # Debug prints to see what is being fetched.
     print("Fetched PR labels:", new_tags)
     print("Fetched PR changed files:", new_files)
 
-    # Update missing labels in the database (if any) based on our YAML mapping
+    # Update missing labels in the database using the YAML mapping (if any).
     update_missing_labels(db_path=args.db_path, yaml_path="new-prs-labeler.yml")
     prs_df, files_df, reviews_df = load_data(db_path=args.db_path)
     print("Data loaded from", args.db_path)
