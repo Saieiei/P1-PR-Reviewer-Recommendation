@@ -10,54 +10,89 @@ import yaml
 import requests
 from datetime import datetime
 
-# --------------------------
-# Helper functions to fetch PR details from GitHub API
-# --------------------------
+# -------------------------------------------------
+# Helper functions: GitHub API calls for PR details
+# -------------------------------------------------
+
 def get_pr_labels(pr_number):
     """
-    Fetch PR details from GitHub and return the set of label names (in lowercase).
+    Fetch the PR details from GitHub and return a set of label names (in lowercase).
     """
     token = os.environ.get("GITHUB_TOKEN")
     owner = os.environ.get("GITHUB_OWNER")
     repo = os.environ.get("GITHUB_REPO")
+    if not (token and owner and repo):
+        print("Missing one of GITHUB_TOKEN/GITHUB_OWNER/GITHUB_REPO environment variables.")
+        return set()
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
     headers = {
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3+json"
     }
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        print("Failed to fetch PR details:", response.text)
+    r = requests.get(url, headers=headers)
+    if r.status_code != 200:
+        print("Failed to fetch PR details:", r.text)
         return set()
-    pr_data = response.json()
+    pr_data = r.json()
     labels = pr_data.get("labels", [])
-    # Return a set of label names in lowercase.
     return {label.get("name", "").strip().lower() for label in labels if label.get("name")}
 
 def get_pr_changed_files(pr_number):
     """
-    Fetch the list of changed files in the PR.
-    Returns a set of filenames (lowercased).
+    Fetch the list of changed files in the PR from GitHub,
+    and return a set of filenames (in lowercase).
     """
     token = os.environ.get("GITHUB_TOKEN")
     owner = os.environ.get("GITHUB_OWNER")
     repo = os.environ.get("GITHUB_REPO")
+    if not (token and owner and repo):
+        print("Missing one of GITHUB_TOKEN/GITHUB_OWNER/GITHUB_REPO environment variables.")
+        return set()
     url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/files"
     headers = {
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3+json"
     }
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        print("Failed to fetch PR files:", response.text)
+    r = requests.get(url, headers=headers)
+    if r.status_code != 200:
+        print("Failed to fetch PR files:", r.text)
         return set()
-    files_data = response.json()
-    return {file_obj.get("filename", "").strip().lower() for file_obj in files_data if file_obj.get("filename")}
+    files_data = r.json()
+    return {f.get("filename", "").strip().lower() for f in files_data if f.get("filename")}
 
-# --------------------------
-# Functions from your existing code (non-interactive)
-# --------------------------
+# -------------------------------------------------
+# Auto-assign labels from YAML mapping
+# -------------------------------------------------
+
+def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml"):
+    """
+    Check each file in changed_files against patterns in new-prs-labeler.yml.
+    Return a set of labels (lowercased) that match.
+    """
+    assigned_labels = set()
+    try:
+        with open(yaml_path, 'r') as f:
+            label_mapping = yaml.safe_load(f)
+    except FileNotFoundError:
+        print(f"WARNING: {yaml_path} not found. Skipping auto label assignment.")
+        return assigned_labels
+    for label, patterns in label_mapping.items():
+        for pattern in patterns:
+            for file_path in changed_files:
+                if fnmatch.fnmatch(file_path, pattern):
+                    assigned_labels.add(label.strip().lower())
+                    break
+    return assigned_labels
+
+# -------------------------------------------------
+# Existing Database & Similarity Functions
+# -------------------------------------------------
+
 def update_missing_labels(db_path="pr_data.db", yaml_path="new-prs-labeler.yml"):
+    """
+    For each PR in the DB with missing labels, try to fill them by matching file paths
+    with patterns from new-prs-labeler.yml. (For older PRs in your DB.)
+    """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("SELECT pr_id, labels FROM pull_requests WHERE labels IS NULL OR labels = ''")
@@ -183,8 +218,7 @@ def get_feedback(db_path="pr_data.db"):
     cursor.execute("SELECT reviewer, fav_rev_points FROM feedback")
     rows = cursor.fetchall()
     conn.close()
-    feedback = {row[0]: row[1] for row in rows}
-    return feedback
+    return {row[0]: row[1] for row in rows}
 
 def rank_reviewers(new_tags, new_files, reviewer_pr_data, pagerank_scores, activity_scores,
                    w1=1, w2=1, weight_sim_act=1.0, gamma=0.2, delta=0.001, db_path="pr_data.db"):
@@ -208,9 +242,10 @@ def rank_reviewers(new_tags, new_files, reviewer_pr_data, pagerank_scores, activ
     results.sort(key=lambda x: x[7], reverse=True)
     return results
 
-# --------------------------
-# Function to post a comment on the PR
-# --------------------------
+# -------------------------------------------------
+# Function to post a comment on the PR via GitHub API
+# -------------------------------------------------
+
 def post_comment(pr_number, comment_body):
     token = os.environ.get("GITHUB_TOKEN")
     owner = os.environ.get("GITHUB_OWNER")
@@ -221,44 +256,69 @@ def post_comment(pr_number, comment_body):
         "Accept": "application/vnd.github.v3+json"
     }
     payload = {"body": comment_body}
-    print("Posting comment to URL:", url)  # Debug print
+    print("Posting comment to URL:", url)  # Debug output
     response = requests.post(url, json=payload, headers=headers)
     if response.status_code == 201:
         print("Comment posted successfully.")
     else:
         print("Failed to post comment:", response.text)
 
-# --------------------------
-# Main function for computing recommendations and posting the comment
-# --------------------------
+# -------------------------------------------------
+# Main: Automated GitHub Actions run (non-interactive)
+# -------------------------------------------------
+
 def main():
-    parser = argparse.ArgumentParser(description="Compute and post reviewer recommendations based on PR details fetched automatically.")
+    parser = argparse.ArgumentParser(description="Compute and post reviewer recommendations automatically.")
     parser.add_argument("--pr_number", type=int, required=True, help="PR number to post recommendations on")
     parser.add_argument("--db_path", type=str, default="pr_data.db", help="Path to the database file")
     args = parser.parse_args()
 
-    # Automatically fetch the new PR's labels and changed files from GitHub API.
-    new_tags = get_pr_labels(args.pr_number)
-    new_files = get_pr_changed_files(args.pr_number)
+    # Automatically fetch the PR's labels and changed files from GitHub.
+    fetched_labels = get_pr_labels(args.pr_number)
+    changed_files = get_pr_changed_files(args.pr_number)
+    
+    print("Fetched PR labels from GitHub:", fetched_labels)
+    print("Fetched PR changed files from GitHub:", changed_files)
+    
+    # If there are no labels fetched, try to auto-assign them based on file patterns.
+    auto_labels = auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
+    if not fetched_labels:
+        new_tags = auto_labels
+        print("No labels found in PR; using auto-assigned labels:", new_tags)
+    else:
+        new_tags = fetched_labels.union(auto_labels)
+        print("Combined PR labels (fetched + auto-assigned):", new_tags)
+    
+    # Use the changed files as new_files.
+    new_files = changed_files
 
-    # Debug prints to see what is being fetched.
-    print("Fetched PR labels:", new_tags)
-    print("Fetched PR changed files:", new_files)
-
-    # Update missing labels in the database using the YAML mapping (if any).
+    # Optionally update missing labels in your DB for older PRs.
     update_missing_labels(db_path=args.db_path, yaml_path="new-prs-labeler.yml")
+    
+    # Load historical data.
     prs_df, files_df, reviews_df = load_data(db_path=args.db_path)
     print("Data loaded from", args.db_path)
+    
+    # Build reviewer data from historical records.
     reviewer_pr_data = build_reviewer_pr_data(prs_df, files_df, reviews_df)
     if not reviewer_pr_data:
-        print("No reviewer PR data found.")
+        print("No reviewer PR data found. Exiting.")
         return
+    
+    # Compute reviewer graph and PageRank.
     G = build_reviewer_graph(reviews_df)
     pagerank_scores = nx.pagerank(G, alpha=0.85, weight="weight")
+    print("PageRank scores computed.")
+    
+    # Compute dynamic activity scores.
     activity_scores = compute_dynamic_activity_scores(reviews_df, tau=30)
+    print("Dynamic activity scores computed.")
+    
+    # Rank reviewers using the new tags and changed files.
     ranked_reviewers = rank_reviewers(new_tags, new_files, reviewer_pr_data, pagerank_scores, activity_scores,
                                       w1=1, w2=2, weight_sim_act=1.0, gamma=0.2, delta=0.001, db_path=args.db_path)
     
+    # Build comment body.
     comment_lines = ["**Reviewer Recommendations:**"]
     for i, (rev, raw_abs, norm_abs, act_score, pr_score, fav_points, norm_fav, final_score) in enumerate(ranked_reviewers[:15], start=1):
         line = (f"{i}. **{rev}** | abs_match: {raw_abs}, norm_abs: {norm_abs:.4f}, "
@@ -268,7 +328,7 @@ def main():
     comment_lines.append("\n_To provide feedback, comment with `/feedback reviewer_username`._")
     comment_body = "\n".join(comment_lines)
     
-    print("Final comment body:\n", comment_body)  # Debug print
+    print("Final comment body:\n", comment_body)  # Debug output
     post_comment(args.pr_number, comment_body)
 
 if __name__ == "__main__":
