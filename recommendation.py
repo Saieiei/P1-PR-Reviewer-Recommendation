@@ -64,11 +64,6 @@ def get_pr_changed_files(pr_number):
 # -------------------------------------------------
 
 def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml"):
-    """
-    For each file in changed_files, check if it matches any pattern in the YAML mapping.
-    This function supports nested patterns (e.g., a dict with an "any" key).
-    Returns a set of assigned labels (lowercased).
-    """
     assigned_labels = set()
     try:
         with open(yaml_path, 'r') as f:
@@ -79,8 +74,6 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
 
     for label, patterns in label_mapping.items():
         flat_patterns = []
-        # Flatten the patterns list: if an element is a string, use it;
-        # if it's a dict, iterate over its values (which are expected to be lists of strings).
         for p in patterns:
             if isinstance(p, str):
                 flat_patterns.append(p)
@@ -90,14 +83,16 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
                         for item in value:
                             if isinstance(item, str):
                                 flat_patterns.append(item)
-        # For each flattened pattern, check if any changed file matches.
+        
         for pattern in flat_patterns:
+            # Convert both the file_path and pattern to lowercase for case-insensitive matching
+            pattern_lower = pattern.lower()
             for file_path in changed_files:
                 file_path_lower = file_path.lower()
-                pattern_lower = pattern.lower()
-                if fnmatch.fnmatch(file_path, pattern):
+                if fnmatch.fnmatch(file_path_lower, pattern_lower):
                     assigned_labels.add(label.strip().lower())
-                    break  # No need to check other files for this pattern.
+                    break  # No need to check other files for this pattern
+
     return assigned_labels
 
 # -------------------------------------------------
