@@ -69,6 +69,7 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
     For each file in changed_files, check if it matches any pattern in the YAML mapping.
     This version converts both the pattern and file path to lowercase and uses a regex compiled
     with re.IGNORECASE for case-insensitive matching.
+    It also replaces '**' with '*' in the pattern to better simulate recursive matching.
     Returns a set of assigned labels.
     """
     import re  # ensure re is imported
@@ -81,7 +82,7 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
         return assigned_labels
 
     for label, patterns in label_mapping.items():
-        # Flatten the patterns list (handle strings and dicts)
+        # Flatten the list of patterns
         flat_patterns = []
         for p in patterns:
             if isinstance(p, str):
@@ -92,14 +93,18 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
                         for item in value:
                             if isinstance(item, str):
                                 flat_patterns.append(item)
-        # For each flattened pattern, compile a regex with IGNORECASE
+        # Process each flattened pattern
         for pattern in flat_patterns:
-            regex = re.compile(fnmatch.translate(pattern.lower()), re.IGNORECASE)
-            # Check all changed files
+            # Replace '**' with '*' for better matching behavior
+            mod_pattern = pattern.replace("**", "*")
+            # Lowercase the modified pattern and compile a regex with IGNORECASE
+            regex = re.compile(fnmatch.translate(mod_pattern.lower()), re.IGNORECASE)
+            # Check each file path from changed_files
             for file_path in changed_files:
+                # file_path is already lowercased by get_pr_changed_files
                 if regex.fullmatch(file_path):
                     assigned_labels.add(label.strip().lower())
-                    # Do not break here; continue to check for other labels/patterns
+                    # Continue checking other patterns to allow multiple labels
     return assigned_labels
 
 # -------------------------------------------------
