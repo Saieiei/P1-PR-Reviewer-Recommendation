@@ -11,6 +11,51 @@ import requests
 from datetime import datetime
 
 # --------------------------
+# Helper functions to fetch PR details from GitHub API
+# --------------------------
+def get_pr_labels(pr_number):
+    """
+    Fetch the PR details and extract the labels.
+    Returns a set of label names in lowercase.
+    """
+    token = os.environ.get("GITHUB_TOKEN")
+    owner = os.environ.get("GITHUB_OWNER")
+    repo = os.environ.get("GITHUB_REPO")
+    url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print("Failed to fetch PR details:", response.text)
+        return set()
+    pr_data = response.json()
+    labels = pr_data.get("labels", [])
+    # Collect label names into a set (lowercase)
+    return {label.get("name", "").strip().lower() for label in labels if label.get("name")}
+
+def get_pr_changed_files(pr_number):
+    """
+    Fetch the list of files changed in the PR.
+    Returns a set of filenames.
+    """
+    token = os.environ.get("GITHUB_TOKEN")
+    owner = os.environ.get("GITHUB_OWNER")
+    repo = os.environ.get("GITHUB_REPO")
+    url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pr_number}/files"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print("Failed to fetch PR files:", response.text)
+        return set()
+    files_data = response.json()
+    return {file_obj.get("filename", "").strip().lower() for file_obj in files_data if file_obj.get("filename")}
+
+# --------------------------
 # Functions from existing code (non-interactive)
 # --------------------------
 
@@ -178,6 +223,7 @@ def post_comment(pr_number, comment_body):
         "Accept": "application/vnd.github.v3+json"
     }
     payload = {"body": comment_body}
+    print("Posting comment to URL:", url)  # Debug print
     response = requests.post(url, json=payload, headers=headers)
     if response.status_code == 201:
         print("Comment posted successfully.")
@@ -188,16 +234,19 @@ def post_comment(pr_number, comment_body):
 # Main function for computing recommendations and posting the comment
 # --------------------------
 def main():
-    parser = argparse.ArgumentParser(description="Compute and post reviewer recommendations.")
+    parser = argparse.ArgumentParser(description="Compute and post reviewer recommendations based on PR details fetched automatically.")
     parser.add_argument("--pr_number", type=int, required=True, help="PR number to post recommendations on")
-    parser.add_argument("--tags", type=str, required=True, help="Comma-separated new PR tags")
-    parser.add_argument("--files", type=str, required=True, help="Comma-separated new PR file paths")
     parser.add_argument("--db_path", type=str, default="pr_data.db", help="Path to the database file")
     args = parser.parse_args()
 
-    new_tags = {tag.strip().lower() for tag in args.tags.split(",") if tag.strip()}
-    new_files = {file.strip().lower() for file in args.files.split(",") if file.strip()}
+    # Fetch PR labels and changed files automatically from GitHub
+    new_tags = get_pr_labels(args.pr_number)
+    new_files = get_pr_changed_files(args.pr_number)
 
+    print("Fetched PR labels:", new_tags)
+    print("Fetched PR changed files:", new_files)
+
+    # Update missing labels in the database (if any) based on our YAML mapping
     update_missing_labels(db_path=args.db_path, yaml_path="new-prs-labeler.yml")
     prs_df, files_df, reviews_df = load_data(db_path=args.db_path)
     print("Data loaded from", args.db_path)
@@ -219,6 +268,8 @@ def main():
         comment_lines.append(line)
     comment_lines.append("\n_To provide feedback, comment with `/feedback reviewer_username`._")
     comment_body = "\n".join(comment_lines)
+    
+    print("Final comment body:\n", comment_body)  # Debug print
     post_comment(args.pr_number, comment_body)
 
 if __name__ == "__main__":
