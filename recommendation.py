@@ -6,6 +6,7 @@ import pandas as pd
 import networkx as nx
 import math
 import fnmatch
+import re
 import yaml
 import requests
 from datetime import datetime
@@ -60,10 +61,16 @@ def get_pr_changed_files(pr_number):
     return {f.get("filename", "").strip().lower() for f in files_data if f.get("filename")}
 
 # -------------------------------------------------
-# Auto-assign labels from YAML mapping (flatten nested patterns)
+# Auto-assign labels from YAML mapping (case-insensitive using regex)
 # -------------------------------------------------
 
 def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml"):
+    """
+    For each file in changed_files, check if it matches any pattern in the YAML mapping.
+    This version converts the pattern and file path to lowercase and uses a regex compiled
+    with re.IGNORECASE to do case-insensitive matching.
+    Returns a set of assigned labels.
+    """
     assigned_labels = set()
     try:
         with open(yaml_path, 'r') as f:
@@ -83,18 +90,15 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
                         for item in value:
                             if isinstance(item, str):
                                 flat_patterns.append(item)
-        
         for pattern in flat_patterns:
-            # Convert both the file_path and pattern to lowercase for case-insensitive matching
+            # Convert pattern to lowercase and compile regex with IGNORECASE
             pattern_lower = pattern.lower()
+            regex = re.compile(fnmatch.translate(pattern_lower), re.IGNORECASE)
             for file_path in changed_files:
                 file_path_lower = file_path.lower()
-                file_path_lower = file_path.lower()
-                pattern_lower = pattern.lower()
-                if fnmatch.fnmatch(file_path_lower, pattern_lower):
+                if regex.fullmatch(file_path_lower):
                     assigned_labels.add(label.strip().lower())
                     break  # No need to check other files for this pattern
-
     return assigned_labels
 
 # -------------------------------------------------
@@ -120,7 +124,6 @@ def update_missing_labels(db_path="pr_data.db", yaml_path="new-prs-labeler.yml")
         file_rows = cursor.fetchall()
         file_paths = [row[0] for row in file_rows if row[0]]
         matched_labels = set()
-        # Use the same flattening approach as above.
         for label, patterns in label_mapping.items():
             flat_patterns = []
             for p in patterns:
@@ -133,8 +136,11 @@ def update_missing_labels(db_path="pr_data.db", yaml_path="new-prs-labeler.yml")
                                 if isinstance(item, str):
                                     flat_patterns.append(item)
             for pattern in flat_patterns:
+                pattern_lower = pattern.lower()
+                regex = re.compile(fnmatch.translate(pattern_lower), re.IGNORECASE)
                 for file_path in file_paths:
-                    if fnmatch.fnmatch(file_path, pattern):
+                    file_path_lower = file_path.lower()
+                    if regex.fullmatch(file_path_lower):
                         matched_labels.add(label)
                         break
         if matched_labels:
