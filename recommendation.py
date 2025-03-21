@@ -67,10 +67,11 @@ def get_pr_changed_files(pr_number):
 def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml"):
     """
     For each file in changed_files, check if it matches any pattern in the YAML mapping.
-    This version converts the pattern and file path to lowercase and uses a regex compiled
-    with re.IGNORECASE to do case-insensitive matching.
+    This version converts both the pattern and file path to lowercase and uses a regex compiled
+    with re.IGNORECASE for case-insensitive matching.
     Returns a set of assigned labels.
     """
+    import re  # ensure re is imported
     assigned_labels = set()
     try:
         with open(yaml_path, 'r') as f:
@@ -80,6 +81,7 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
         return assigned_labels
 
     for label, patterns in label_mapping.items():
+        # Flatten the patterns list (handle strings and dicts)
         flat_patterns = []
         for p in patterns:
             if isinstance(p, str):
@@ -90,15 +92,14 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
                         for item in value:
                             if isinstance(item, str):
                                 flat_patterns.append(item)
+        # For each flattened pattern, compile a regex with IGNORECASE
         for pattern in flat_patterns:
-            # Convert pattern to lowercase and compile regex with IGNORECASE
-            pattern_lower = pattern.lower()
-            regex = re.compile(fnmatch.translate(pattern_lower), re.IGNORECASE)
+            regex = re.compile(fnmatch.translate(pattern.lower()), re.IGNORECASE)
+            # Check all changed files
             for file_path in changed_files:
-                file_path_lower = file_path.lower()
-                if regex.fullmatch(file_path_lower):
+                if regex.fullmatch(file_path):
                     assigned_labels.add(label.strip().lower())
-                    break  # No need to check other files for this pattern
+                    # Do not break here; continue to check for other labels/patterns
     return assigned_labels
 
 # -------------------------------------------------
