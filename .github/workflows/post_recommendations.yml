@@ -35,5 +35,4 @@ jobs:
           GITHUB_OWNER: Saieiei
           GITHUB_REPO: PR-Reviewer-Recommendation
         run: |
-          # The updated recommendation.py automatically fetches the PR's labels and changed files.
           python recommendation.py --pr_number ${{ github.event.pull_request.number }}
