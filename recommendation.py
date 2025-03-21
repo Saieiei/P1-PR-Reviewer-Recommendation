@@ -93,6 +93,8 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
         # For each flattened pattern, check if any changed file matches.
         for pattern in flat_patterns:
             for file_path in changed_files:
+                file_path_lower = file_path.lower()
+                pattern_lower = pattern.lower()
                 if fnmatch.fnmatch(file_path, pattern):
                     assigned_labels.add(label.strip().lower())
                     break  # No need to check other files for this pattern.
