@@ -67,9 +67,8 @@ def get_pr_changed_files(pr_number):
 def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml"):
     """
     For each file in changed_files, check if it matches any pattern in the YAML mapping.
-    This version converts both the pattern and file path to lowercase and uses a regex compiled
-    with re.IGNORECASE for case-insensitive matching.
-    It also replaces '**' with '*' in the pattern to better simulate recursive matching.
+    This version replaces '**' with '*' in the pattern, converts both the pattern and the file path to lowercase,
+    and uses a regex compiled with re.IGNORECASE for case-insensitive matching.
     Returns a set of assigned labels.
     """
     import re  # ensure re is imported
@@ -82,7 +81,7 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
         return assigned_labels
 
     for label, patterns in label_mapping.items():
-        # Flatten the list of patterns
+        # Flatten the list of patterns (handle both strings and dicts)
         flat_patterns = []
         for p in patterns:
             if isinstance(p, str):
@@ -95,16 +94,15 @@ def auto_assign_labels_from_yaml(changed_files, yaml_path="new-prs-labeler.yml")
                                 flat_patterns.append(item)
         # Process each flattened pattern
         for pattern in flat_patterns:
-            # Replace '**' with '*' for better matching behavior
+            # Replace "**" with "*" to avoid fnmatch quirks
             mod_pattern = pattern.replace("**", "*")
             # Lowercase the modified pattern and compile a regex with IGNORECASE
             regex = re.compile(fnmatch.translate(mod_pattern.lower()), re.IGNORECASE)
-            # Check each file path from changed_files
+            # Check each changed file (which is already lowercased when fetched)
             for file_path in changed_files:
-                # file_path is already lowercased by get_pr_changed_files
                 if regex.fullmatch(file_path):
                     assigned_labels.add(label.strip().lower())
-                    # Continue checking other patterns to allow multiple labels
+                    # Do NOT break, so that multiple labels can be accumulated
     return assigned_labels
 
 # -------------------------------------------------
