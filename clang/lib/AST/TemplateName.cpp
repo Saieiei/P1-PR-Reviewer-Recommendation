@@ -7,3 +7,4 @@ new test
 demo
 demo2
 demo3
+testing clang:frontend label after removing /*
