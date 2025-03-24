@@ -7,4 +7,4 @@ new test
 demo
 demo2
 demo3
-testing clang:frontend label after removing /*
+testing clang:frontend label after removing this from yaml/*
