@@ -1,60 +1,60 @@
 BOLT:
-  - bolt/**/*
+  - bolt/**
 
 ClangIR:
-  - clang/include/clang/CIR/**/*
-  - clang/lib/CIR/**/*
-  - clang/tools/cir-*/**/*
-  - clang/test/CIR/**/*
+  - clang/include/clang/CIR/**
+  - clang/lib/CIR/**
+  - clang/tools/cir-*/**
+  - clang/test/CIR/**
 
 clang:dataflow:
-  - clang/include/clang/Analysis/FlowSensitive/**/*
-  - clang/lib/Analysis/FlowSensitive/**/*
-  - clang/unittests/Analysis/FlowSensitive/**/*
+  - clang/include/clang/Analysis/FlowSensitive/**
+  - clang/lib/Analysis/FlowSensitive/**
+  - clang/unittests/Analysis/FlowSensitive/**
   - clang/docs/DataFlowAnalysisIntro.md
-  - clang/docs/DataFlowAnalysisIntroImages/**/*
+  - clang/docs/DataFlowAnalysisIntroImages/**
 
 clang:frontend:
   - clang/lib/AST/**
-  - clang/include/clang/AST/**/*
-  - clang/lib/Basic/**/*
-  - clang/include/clang/Basic/**/*
-  - clang/lib/Interpreter/**/*
-  - clang/include/clang/Interpreter/**/*
-  - clang/lib/Lex/**/*
-  - clang/include/clang/Lex/**/*
-  - clang/lib/Parse/**/*
-  - clang/include/clang/Parse/**/*
-  - clang/lib/Sema/**/*
-  - clang/include/clang/Sema/**/*
+  - clang/include/clang/AST/**
+  - clang/lib/Basic/**
+  - clang/include/clang/Basic/**
+  - clang/lib/Interpreter/**
+  - clang/include/clang/Interpreter/**
+  - clang/lib/Lex/**
+  - clang/include/clang/Lex/**
+  - clang/lib/Parse/**
+  - clang/include/clang/Parse/**
+  - clang/lib/Sema/**
+  - clang/include/clang/Sema/**
 
 clang:headers:
-  - clang/lib/Headers/**/*
+  - clang/lib/Headers/**
 
 compiler-rt:
-  - compiler-rt/**/*
+  - compiler-rt/**
 
 flang:
-  - flang/**/*
+  - flang/**
 
 flang:frontend:
-  - flang/Parser/**/*
-  - flang/Evaluate/**/*
-  - flang/Semantics/**/*
+  - flang/Parser/**
+  - flang/Evaluate/**
+  - flang/Semantics/**
 
 HLSL:
-  - clang/*HLSL*/**/*
+  - clang/*HLSL*/**
   - clang/**/*HLSL*
-  - llvm/**/Frontend/HLSL/**/*
+  - llvm/**/Frontend/HLSL/**
 
 lld:
-  - lld/**/*
+  - lld/**
 
 llvm-lit:
-  - llvm/utils/lit/**/*
+  - llvm/utils/lit/**
 
 PGO:
-  - llvm/**/ProfileData/**/*
+  - llvm/**/ProfileData/**
   - llvm/**/SampleProfile*
   - llvm/**/CodeGen/MIRSampleProfile*
   - llvm/lib/Transforms/Instrumentation/CGProfile.cpp
@@ -63,15 +63,15 @@ PGO:
   - llvm/lib/Transforms/Instrumentation/InstrProfiling.cpp
   - llvm/lib/Transforms/Instrumentation/PGO*
   - llvm/lib/Transforms/Instrumentation/ValueProfile*
-  - llvm/test/Instrumentation/InstrProfiling/**/*
-  - llvm/test/Transforms/PGOProfile/**/*
-  - llvm/test/Transforms/SampleProfile/**/*
-  - llvm/**/llvm-profdata/**/*
-  - llvm/**/llvm-profgen/**/*
+  - llvm/test/Instrumentation/InstrProfiling/**
+  - llvm/test/Transforms/PGOProfile/**
+  - llvm/test/Transforms/SampleProfile/**
+  - llvm/**/llvm-profdata/**
+  - llvm/**/llvm-profgen/**
 
 vectorizers:
-  - llvm/lib/Transforms/Vectorize/**/*
-  - llvm/include/llvm/Transforms/Vectorize/**/*
+  - llvm/lib/Transforms/Vectorize/**
+  - llvm/include/llvm/Transforms/Vectorize/**
 
 # IMPORTED FROM CODEOWNERS
 LTO:
@@ -324,10 +324,10 @@ mlir:presburger:
   - mlir/**/*Presburger*/**
 
 mlir:python:
-  - mlir/python/**/*
+  - mlir/python/**
 
 mlir:vectorops:
-  - mlir/**/Vector/**/*
+  - mlir/**/Vector/**
 
 coroutines:
   - clang/docs/DebuggingCoroutines.rst
