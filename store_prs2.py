@@ -85,8 +85,8 @@ def fetch_prs_in_range(token, owner, repo,
     session.verify = verify_ssl
 
     retries = Retry(
-        total=10,
-        backoff_factor=1,
+        total=3,           # Try fewer times
+        backoff_factor=0.5,  # Shorter delay between retries
         status_forcelist=[502, 503, 504],
         allowed_methods=["GET"]
     )
@@ -182,8 +182,8 @@ def fetch_commits_for_pr(token, owner, repo, pr_number, verify_ssl=True):
     session.verify = verify_ssl
 
     retries = Retry(
-        total=10,
-        backoff_factor=1,
+        total=3,           # Try fewer times
+        backoff_factor=0.5,  # Shorter delay between retries
         status_forcelist=[502, 503, 504],
         allowed_methods=["GET"]
     )
@@ -226,8 +226,8 @@ def fetch_pr_details(token, owner, repo, pr_number, verify_ssl=True):
     session.verify = verify_ssl
 
     retries = Retry(
-        total=10,
-        backoff_factor=1,
+        total=3,           # Try fewer times
+        backoff_factor=0.5,  # Shorter delay between retries
         status_forcelist=[502, 503, 504],
         allowed_methods=["GET"]
     )
