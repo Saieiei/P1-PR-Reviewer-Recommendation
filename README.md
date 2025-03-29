@@ -146,11 +146,11 @@ file = pr_data.db
 ---
 
 ### recommendation.py
-- **Purpose:** Similar to ml_pm2_spda_fav_fs_t15_rr.py but designed to run within GitHub Actions. It:
+- **Purpose:** Similar to `ml_pm2_spda_fav_fs_t15_rr.py` but designed to run within GitHub Actions. It:
   1. Fetches changed files and labels from GitHub for a specific PR,
   2. Ranks potential reviewers,
   3. (Optionally) posts a comment with those recommendations on the PR.
-- **Usage**: Usually triggered by .github/workflows/post_recommendations.yml, but can be run locally if the environment variables (GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO) are set.
+- **Usage**: Usually triggered by `.github/workflows/post_recommendations.yml`, but can be run locally if the environment variables (`GITHUB_TOKEN`, `GITHUB_OWNER`, and `GITHUB_REPO`) are set.
 
 ---
 
