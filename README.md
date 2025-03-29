@@ -209,34 +209,33 @@ required_labels =
 [database]
 file = pr_data.db
 ```
-###2. Initialize or Update the Database
+### 2. Initialize or Update the Database
 Run:
 ```bash
 python store_prs2.py
 ```
-This fetches the relevant PR data from GitHub and stores everything in pr_data.db.
+This fetches the relevant PR data from GitHub and stores everything in `pr_data.db`.
 
-3. Optional: Reset the Database
+### 3. Optional: Reset the Database
 If you ever need to clear existing data:
-
-bash
-
+```bash
 python delete_tables_restart.py
-Then re-run store_prs2.py to rebuild the database from scratch.
+```
+Then re-run `store_prs2.py` to rebuild the database from scratch.
 
-4. Run Recommendation or Other Scripts
-Local top 15:
+### 4. Run Recommendation or Other Scripts
+- Local top 15:
+  ```bash
+  python ml_pm2_spda_fav_fs_t15_rr.py
+  ```
+  Displays the top 15 recommended reviewers in the terminal.
 
-bash
+- Reviewer’s data to Excel:
+  ```bash
+  python view_reviewer_data_excel.py
+  ```
+  Exports an Excel spreadsheet for the specified reviewer.
 
-python ml_pm2_spda_fav_fs_t15_rr.py
-Displays the top 15 recommended reviewers in the terminal.
-
-Reviewer’s data to Excel:
-
-bash
-
-python view_reviewer_data_excel.py
-Exports an Excel spreadsheet for the specified reviewer.
+---
 
 
