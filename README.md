@@ -263,3 +263,5 @@ This queries the DB for the reviewer’s PRs, merges label/file data, and writes
 - You can manually run `recommendation.py` if you supply environment variables for GitHub (e.g., `GITHUB_TOKEN`). Typically, though, it’s triggered by `.github/workflows/post_recommendations.yml`.
 
 ---
+
+> **Note**: For security reasons, never commit real API tokens or other sensitive credentials to a public repository. Make sure to remove or invalidate any shared tokens (like `ghp_xxx`) before pushing your work to GitHub.
