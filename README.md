@@ -83,7 +83,7 @@ file = pr_data.db
   - `pr_files`
   - `pull_requests`
   - `feedback`	
-- *Usage:*
+- **Usage:**
    ```bash
    python delete_tables_restart.py
    ```
