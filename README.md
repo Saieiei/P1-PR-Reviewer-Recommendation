@@ -241,7 +241,7 @@ Then re-run `store_prs2.py` to rebuild the database from scratch.
 ## Feedback and Points
 1. Comment on a pull request with:
    ```bash
-   /feedback someReviewer
+   /feedback reviwer_names
    ```
 2. The process_feedback.yml workflow invokes process_feedback.py, which increments someReviewer’s fav_rev_points in the database.
 3. On subsequent recommendations, that reviewer now ranks higher.
