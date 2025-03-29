@@ -135,14 +135,22 @@ file = pr_data.db
   - Reviewer dynamic activity,
   - Other weighting factors.
 
-- Usage:
-
+- **Usage**:
   1. Make sure the database is updated (via store_prs2.py).
   2. Run:
      ```bash
      python ml_pm2_spda_fav_fs_t15_rr.py
      ```
   3. It outputs the top 15 reviewers in your terminal.
+
+---
+
+### recommendation.py
+- **Purpose:** Similar to ml_pm2_spda_fav_fs_t15_rr.py but designed to run within GitHub Actions. It:
+  1. Fetches changed files and labels from GitHub for a specific PR,
+  2. Ranks potential reviewers,
+  3. (Optionally) posts a comment with those recommendations on the PR.
+- **Usage**: Usually triggered by .github/workflows/post_recommendations.yml, but can be run locally if the environment variables (GITHUB_TOKEN, GITHUB_OWNER, and GITHUB_REPO) are set.
 
 ---
 
