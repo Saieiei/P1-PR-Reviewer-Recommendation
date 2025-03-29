@@ -124,7 +124,7 @@ file = pr_data.db
 	   ```bash
 	   python view_reviewer_data_excel.py
 	   ```
-	3.It generates an Excel file like <reviewer>_data.xlsx.
+	3. It generates an Excel file like <reviewer>_data.xlsx.
 
 
 
