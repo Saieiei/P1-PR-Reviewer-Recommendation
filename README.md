@@ -171,3 +171,8 @@ file = pr_data.db
 
 ---
 
+`.github/workflows/process_feedback.yml`
+- **Purpose:** Waits for new PR comments. If it finds `/feedback <reviewer>`, it calls `process_feedback.py, which updates that reviewer’s `fav_rev_points` in the database.
+
+---
+
