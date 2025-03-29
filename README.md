@@ -116,5 +116,17 @@ file = pr_data.db
 
 ---
 
+### view_reviewer_data_excel.py
+- **Purpose:** Queries the database for a specific reviewer’s data (PRs they reviewed, labels, file paths, etc.), then exports those results into an Excel file.
+- **Usage:**
+	1. (Optional) Edit the reviewer variable in the script, or pass arguments if you adapt it.
+	2. Run:
+	```bash
+	python view_reviewer_data_excel.py
+	```
+	It generates an Excel file like <reviewer>_data.xlsx.
+
+
+
 
 
