@@ -162,7 +162,8 @@ file = pr_data.db
 ---
 
 ## GitHub Workflows
-`.github/workflows/post_recommendations.yml`
+
+### `.github/workflows/post_recommendations.yml`
 - **Purpose:** Runs `recommendation.py` automatically whenever a pull request is opened, reopened, or updated (synchronized). It:
   1. Checks out the repo.
   2. Installs Python and necessary dependencies.
