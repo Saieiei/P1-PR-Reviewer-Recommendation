@@ -121,10 +121,10 @@ file = pr_data.db
 - **Usage:**
 	1. (Optional) Edit the reviewer variable in the script, or pass arguments if you adapt it.
 	2. Run:
-	```bash
-	python view_reviewer_data_excel.py
-	```
-	It generates an Excel file like <reviewer>_data.xlsx.
+	   ```bash
+	   python view_reviewer_data_excel.py
+	   ```
+	3.It generates an Excel file like <reviewer>_data.xlsx.
 
 
 
