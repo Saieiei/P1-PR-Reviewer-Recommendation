@@ -154,4 +154,10 @@ file = pr_data.db
 
 ---
 
+### process_feedback.py
+- **Purpose:** Listens for user comments like `/feedback <reviewer>` on a pull request. When it sees such a comment:
+  1. Increments the `<reviewer>`’s `fav_rev_points` in the `feedback` table of `pr_data.db`.
+- **Usage**: Triggered by `.github/workflows/process_feedback.yml` whenever a PR comment matches the `/feedback` pattern.
+
+---
 
