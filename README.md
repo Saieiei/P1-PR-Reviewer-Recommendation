@@ -93,7 +93,7 @@ file = pr_data.db
 
 ## Database File
 
-## `pr_data.db`
+### `pr_data.db`
 - **Purpose:** SQLite database storing all PR-related data. Includes:
   - **pull_requests:** (`pr_id`, `title`, `user_login`, `labels`, `created_at`, `updated_at`)
   - **pr_files:** (`pr_id`, `file_path`)
@@ -103,5 +103,18 @@ file = pr_data.db
 This file is generated and updated by the scripts. If it doesn’t exist, it will be created automatically.
 
 ---
+
+## Scripts
+
+### store_prs2.py
+- **Purpose:** Reads `config.ini`, authenticates with GitHub, fetches PRs within the specified date range, and inserts them (along with their files and reviews) into `pr_data.db`.
+- **Usage:**
+  ```bash
+  python store_prs2.py
+  ```
+Ensures the database is populated with up-to-date pull request information.
+
+---
+
 
 
