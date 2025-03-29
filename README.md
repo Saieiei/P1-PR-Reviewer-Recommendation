@@ -78,7 +78,7 @@ file = pr_data.db
 
 ## Database Reset Script
 
-# `delete_tables_restart.py`
+### `delete_tables_restart.py`
 - **Purpose**  Resets the local database tables to empty by deleting all entries in:
   - `pr_files`
   - `pull_requests`
