@@ -79,13 +79,13 @@ file = pr_data.db
 ## Database Reset Script
 
 ### `delete_tables_restart.py`
-- **Purpose**  Resets the local database tables to empty by deleting all entries in:
+- **Purpose:**  Resets the local database tables to empty by deleting all entries in:
   - `pr_files`
   - `pull_requests`
   - `feedback`	
-- `Usage:`
+- *Usage:*
    ```bash
    python delete_tables_restart.py
    ```
- After this, you can run the data-collection script again (e.g., store_prs2.py) to rebuild the database with fresh info.
+   After this, you can run the data-collection script again (e.g., store_prs2.py) to rebuild the database with fresh info.
 
