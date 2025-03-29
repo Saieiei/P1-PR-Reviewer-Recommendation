@@ -161,7 +161,7 @@ Please open an issue or submit a pull request if you find any problems or want t
 ---
 
 ## License
-This project is licensed under the [MIT License](LICENSE).  
+NA
 
 
 > **Note**: For security reasons, never commit real API tokens or other sensitive credentials to a public repository. Make sure to remove or invalidate any shared tokens (like `ghp_xxx`) before pushing your work to GitHub.
