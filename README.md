@@ -238,4 +238,22 @@ Then re-run `store_prs2.py` to rebuild the database from scratch.
 
 ---
 
+## Feedback and Points
+1. Comment on a pull request with:
+   ```bash
+   /feedback someReviewer
+   ```
+2. The process_feedback.yml workflow invokes process_feedback.py, which increments someReviewer’s fav_rev_points in the database.
+3. On subsequent recommendations, that reviewer now ranks higher.
+
+---
+
+## Excel Export
+If you want to analyze or share a particular reviewer’s activity, run:
+```bash 
+python view_reviewer_data_excel.py
+```
+This queries the DB for the reviewer’s PRs, merges label/file data, and writes it out in an Excel file for easy review.
+
+---
 
