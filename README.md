@@ -161,7 +161,7 @@ file = pr_data.db
 
 ---
 
-### GitHub Workflows
+## GitHub Workflows
 `.github/workflows/post_recommendations.yml`
 - **Purpose:** Runs `recommendation.py` automatically whenever a pull request is opened, reopened, or updated (synchronized). It:
   1. Checks out the repo.
@@ -171,8 +171,9 @@ file = pr_data.db
 
 ---
 
-`.github/workflows/process_feedback.yml`
+### `.github/workflows/process_feedback.yml`
 - **Purpose:** Waits for new PR comments. If it finds `/feedback <reviewer>`, it calls `process_feedback.py, which updates that reviewer’s `fav_rev_points` in the database.
 
 ---
+
 
