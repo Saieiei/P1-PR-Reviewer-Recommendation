@@ -130,20 +130,19 @@ file = pr_data.db
 
 ### ml_pm2_spda_fav_fs_t15_rr.py
 - **Purpose:** A script that queries `pr_data.db` and ranks the top 15 reviewers based on:
- - Matching file paths/tags,
- - “Favorite” reviewer points (feedback),
- - Reviewer dynamic activity,
- - Other weighting factors.
+  - Matching file paths/tags,
+  - “Favorite” reviewer points (feedback),
+  - Reviewer dynamic activity,
+  - Other weighting factors.
 
 - Usage:
 
- 1. Make sure the database is updated (via store_prs2.py).
-
- 2. Run:
-    ```bash
-    python ml_pm2_spda_fav_fs_t15_rr.py
-    ```
- 3. It outputs the top 15 reviewers in your terminal.
+  1. Make sure the database is updated (via store_prs2.py).
+  2. Run:
+     ```bash
+     python ml_pm2_spda_fav_fs_t15_rr.py
+     ```
+  3. It outputs the top 15 reviewers in your terminal.
 
 ---
 
