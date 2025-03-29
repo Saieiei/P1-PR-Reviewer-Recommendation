@@ -83,3 +83,9 @@ file = pr_data.db
   - `pr_files`
   - `pull_requests`
   - `feedback`	
+- `Usage:`
+   ```bash
+   python delete_tables_restart.py
+   ```
+ After this, you can run the data-collection script again (e.g., store_prs2.py) to rebuild the database with fresh info.
+
