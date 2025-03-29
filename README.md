@@ -1,92 +1,100 @@
 # PR Reviewer Recommendation System
 
-This repository implements a system that fetches pull request (PR) data from GitHub, stores it in a SQLite database, and then processes the data to recommend reviewers based on various criteria. The system also automates labeling of PRs and collects user feedback to adjust reviewer scores.
+This repository provides a collection of scripts and GitHub Actions workflows to automate the process of:
+1. Storing pull request data (PRs, files, and reviews) in a local SQLite database.
+2. Automatically labeling new PRs if they are missing labels.
+3. Generating reviewer recommendations based on various signals (e.g. file paths, tags, dynamic activity, and feedback).
+4. Allowing feedback to update reviewer “favorite” points.
+5. Viewing reviewer data in an Excel export.
 
-## File Descriptions
+Below is an overview of each file’s purpose and how they fit together.
+
+---
+
+## Table of Contents
+
+- [Configuration File](#configuration-file)
+  - [config.ini](#configini)
+- [Database Reset Script](#database-reset-script)
+  - [delete_tables_restart.py](#delete_tables_restartpy)
+- [Database File](#database-file)
+  - [pr_data.db](#pr_datadb)
+- [Scripts](#scripts)
+  - [store_prs2.py](#store_prs2py)
+  - [view_reviewer_data_excel.py](#view_reviewer_data_excelpy)
+  - [ml_pm2_spda_fav_fs_t15_rr.py](#ml_pm2_spda_fav_fs_t15_rrpy)
+  - [recommendation.py](#recommendationpy)
+  - [process_feedback.py](#process_feedbackpy)
+- [GitHub Workflows](#github-workflows)
+  - [.github/workflows/post_recommendations.yml](#githubworkflowspost_recommendationsyml)
+  - [.github/workflows/process_feedback.yml](#githubworkflowsprocess_feedbackyml)
+  - [new-prs-labeler.yml](#new-prs-labeleryml)
+  - [new-prs-labeler.yml (Alternate Explanation)](#new-prs-labeleryml-alternate-explanation)
+- [Usage Workflow](#usage-workflow)
+  - [1. Update the config.ini](#1-update-the-configini)
+  - [2. Initialize or Update the Database](#2-initialize-or-update-the-database)
+  - [3. (Optional) Reset the Database](#3-optional-reset-the-database)
+  - [4. Run Recommendation or Other Scripts](#4-run-recommendation-or-other-scripts)
+- [Feedback and Points](#feedback-and-points)
+- [Excel Export](#excel-export)
+- [Additional Notes](#additional-notes)
+
+---
+
+## Configuration File
 
 ### `config.ini`
-- **Purpose:** Stores configuration settings such as GitHub API credentials, repository details, and filter criteria.
-- **Details:**  
-  - **[github]**: Contains the GitHub token, repository owner, and repository name.  
-  - **[filters]**: Defines constraints (e.g., start date, end date, and PR status filters) for fetching PRs.  
-  - **[database]**: Specifies the SQLite database file (`pr_data.db`) where PR data is stored.
+This file holds configuration details that the scripts use to gather data from GitHub. The sections include:
+
+- **[github]**  
+  Contains your `token`, `owner`, and `repo`:
+  - `token` is your personal access token (PAT) for GitHub. (Keep this secret!)
+  - `owner` is the GitHub organization or user who owns the repository.
+  - `repo` is the actual repository name.
+
+- **[filters]**  
+  Specifies date ranges, filtering options such as:
+  - `start_date` and `end_date` for limiting which pull requests get retrieved.
+  - `only_closed_prs`, `only_merged_prs`.
+  - `required_labels` (can be left blank if no requirement).
+
+- **[database]**  
+  Points to the local SQLite database file (by default, `pr_data.db`).
+
+> **Important**: Do **not** commit sensitive tokens to a public repository. The token in the example is just a placeholder.
+
+---
+
+## Database Reset Script
 
 ### `delete_tables_restart.py`
-- **Purpose:** Resets the database by clearing data from key tables.
-- **Details:** Deletes all rows from the tables `pr_files`, `reviews`, `pull_requests`, and `feedback`.
+If you ever need to start over or clear data from the local database, run this script. It deletes all entries from these tables:
+- `pr_files`
+- `reviews`
+- `pull_requests`
+- `feedback`
 
-### `ml_pm2_spda_fav_fs_t15_rr.py`
-- **Purpose:** Processes the PR data stored in `pr_data.db` to compute and display the top 15 reviewer recommendations.
-- **Details:**  
-  - Runs in a terminal environment.
-  - Uses metrics like absolute matching score, dynamic activity score, and user feedback to rank reviewers.
-  - **Note:** Make sure to update the database before running this script.
+This is useful if you want to wipe the database and rebuild from scratch.
 
-### `new-prs-labeler.yml`
-- **Purpose:** Automates the assignment of labels to PRs that do not have labels assigned during creation.
-- **Details:**  
-  - Contains a YAML mapping of file path patterns to labels.
-  - Helps ensure that PRs get appropriate labels based on the files they change.
+---
 
-### `.github/workflows/post_recommendations.yml` and `recommendation.py`
-- **Purpose:** Automatically posts reviewer recommendations on PRs via GitHub Actions.
-- **Details:**  
-  - **post_recommendations.yml:** Triggers on PR events (opened, reopened, synchronized) and runs the recommendation process.  
-  - **recommendation.py:** Contains the logic to calculate and post the reviewer recommendations (similar to the terminal script but without the feedback loop).
+## Database File
 
 ### `pr_data.db`
-- **Purpose:** The SQLite database where all PR-related data is stored.
-- **Details:**  
-  - **Tables include:**  
-    - `feedback`: Contains `reviewer` and `fav_rev_points`.  
-    - `pr_files`: Stores `pr_id` and file paths.  
-    - `pull_requests`: Stores `pr_id`, title, user login, labels, created_at, and updated_at.  
-    - `reviews`: Stores `pr_id`, reviewer, review_date, and review state.
+This is the SQLite database where all data is stored:
+- **pull_requests**: Contains `pr_id`, `title`, `user_login`, `labels`, `created_at`, `updated_at`.
+- **pr_files**: Holds the PR file paths mapped to a `pr_id`.
+- **reviews**: Contains `pr_id`, `reviewer`, `review_date`, `state` (e.g., APPROVED, COMMENTED).
+- **feedback**: Stores each reviewer’s favorite reviewer points (`fav_rev_points`), used to give certain reviewers a boost when they receive positive feedback.
 
-### `process_feedback.py` and `process_feedback.yml`
-- **Purpose:** Collects and processes feedback from users to update reviewer points.
-- **Details:**  
-  - **process_feedback.py:** Parses GitHub comments (using a command like `/feedback reviewer_name`) and updates the feedback table in the database.  
-  - **process_feedback.yml:** A GitHub Actions workflow that triggers on new issue comments to run the feedback processing script.
+If you have not created it yet, it will be generated by the scripts when needed.
+
+---
+
+## Scripts
 
 ### `store_prs2.py`
-- **Purpose:** Fetches PR data from GitHub using the settings in `config.ini` and stores the data in `pr_data.db`.
-- **Details:**  
-  - Creates required tables if they don’t exist.
-  - Retrieves details such as PR files, commits, and reviews using GitHub API calls.
-
-### `view_reviewer_data_excel.py`
-- **Purpose:** Exports reviewer data into an Excel sheet.
-- **Details:**  
-  - Queries the database to retrieve the PRs, labels, and file paths associated with a given reviewer.
-  - Generates an Excel report summarizing the reviewer’s activity.
-
-## How to Use
-
-1. **Configure:**  
-   Update `config.ini` with your GitHub token, repository owner, repository name, and any specific filter settings.
-
-2. **Store PR Data:**  
-   Run `store_prs2.py` to fetch and save PR data from GitHub into `pr_data.db`.
-
-3. **Reset Database (if needed):**  
-   Use `delete_tables_restart.py` to clear data from the database tables.
-
-4. **Generate Reviewer Recommendations:**  
-   - **Terminal:** Run `ml_pm2_spda_fav_fs_t15_rr.py` to compute and display the top 15 reviewers.  
-   - **GitHub Actions:** The workflow in `.github/workflows/post_recommendations.yml` automatically runs `recommendation.py` to post recommendations on PRs.
-
-5. **Process Feedback:**  
-   Provide feedback through GitHub comments (using the `/feedback reviewer_name` command). The workflow in `process_feedback.yml` runs `process_feedback.py` to update reviewer scores accordingly.
-
-6. **Export Reviewer Data:**  
-   Run `view_reviewer_data_excel.py` to generate an Excel report for a specific reviewer’s PR activity.
-
-## GitHub Actions Workflows
-
-- **Post Recommendations:** Automatically computes and posts reviewer recommendations on PR events.
-- **Process Feedback:** Triggers on issue comments to update reviewer feedback in the database.
-
-## Conclusion
-
-This system streamlines the PR review process by automating data collection, labeling, reviewer recommendation, and feedback management. Customize the configuration and extend the scripts as needed to fit your development workflow.
+- **Purpose**: Uses the configuration (`config.ini`) to connect to GitHub’s API and fetch pull requests (and their associated files, reviews, etc.), storing them into `pr_data.db`.
+- **Usage**: Run it in your terminal:
+  ```bash
+  python store_prs2.py
