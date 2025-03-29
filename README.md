@@ -10,8 +10,9 @@ This repository provides tools and workflows to help analyze and manage pull req
 3. [Usage](#usage)
 4. [Workflows](#workflows)
 5. [Database Schema](#database-schema)
-6. [Contributing](#contributing)
-7. [License](#license)
+6. [How to Use](#How-to-Use)
+7. [Contributing](#contributing)
+8. [License](#license)
 
 ---
 
@@ -153,6 +154,36 @@ This project focuses on:
    - `reviewer`, `fav_rev_point`.
 
 ---
+
+## How to Use
+
+1. **Clone the Repository**  
+   ```bash
+   git clone https://github.com/Saieie/PR-Reviewer-Recommendation.git
+   cd PR Reviewer Recommendation
+   
+   ### Install Dependencies
+
+- Make sure you have **Python 3** and **pip** installed.  
+- Install any required libraries (if listed in a `requirements.txt` file or mentioned in the scripts).
+
+---
+
+### Set Up `config.ini`
+
+- Update the `[github]` section with your GitHub token, repository owner, and repository name.  
+- In the `[filters]` section, set the date range and specify whether to include only closed or merged PRs.  
+- Ensure the `[database]` section points to the correct database file (default is `pr_data.db`).
+
+---
+
+### Initialize/Update the Database
+
+Run the following command to fetch and store PR data (based on your `config.ini` settings) into `pr_data.db`:
+```bash
+python store_prs2.py
+
+
 
 ## Contributing
 Contributions, bug reports, and feature requests are welcome!  
