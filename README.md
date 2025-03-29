@@ -94,11 +94,11 @@ file = pr_data.db
 ## Database File
 
 ## `pr_data.db`
--**Purpose:** SQLite database storing all PR-related data. Includes:
- -**pull_requests:** (`pr_id`, `title`, `user_login`, `labels`, `created_at`, `updated_at`)
- -**pr_files:** (`pr_id`, `file_path`)
- -**reviews:** (`pr_id`, `reviewe`, `review_date`, `state`)
- -**feedback:** (`reviewer`, `fav_rev_points`) — tracks user feedback points.
+- **Purpose:** SQLite database storing all PR-related data. Includes:
+ - **pull_requests:** (`pr_id`, `title`, `user_login`, `labels`, `created_at`, `updated_at`)
+ - **pr_files:** (`pr_id`, `file_path`)
+ - **reviews:** (`pr_id`, `reviewe`, `review_date`, `state`)
+ - **feedback:** (`reviewer`, `fav_rev_points`) — tracks user feedback points.
 
 This file is generated and updated by the scripts. If it doesn’t exist, it will be created automatically.
 
