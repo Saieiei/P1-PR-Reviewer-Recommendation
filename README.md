@@ -161,8 +161,9 @@ This project focuses on:
    ```bash
    git clone https://github.com/Saieie/PR-Reviewer-Recommendation.git
    cd PR Reviewer Recommendation
+   ````
    
-   ### Install Dependencies
+ ### Install Dependencies
 
 - Make sure you have **Python 3** and **pip** installed.  
 - Install any required libraries (if listed in a `requirements.txt` file or mentioned in the scripts).
@@ -182,8 +183,32 @@ This project focuses on:
 Run the following command to fetch and store PR data (based on your `config.ini` settings) into `pr_data.db`:
 ```bash
 python store_prs2.py
+````
+### Generate Analytics (Manual Script)
 
+Run the following command to output the top 15 reviewers based on stored data and feedback metrics:
+```bash
+python ml_pm2_spda_fav_fs_t15_rr.py
+````
+### Process Feedback (If Needed)
+Provide feedback via the mechanism set up in process_feedback.yml.
+The workflow will call process_feedback.py to update reviewer scores in the feedback table.
 
+### Reset the Database (Optional)
+If you need to clear all existing data, run:
+````bash
+python delete_tables_restart.py
+````
+**Note**: This is irreversible and removes all records from the pr_files, reviews, pull_requests, and feedback tables.
+
+### Export Data to Excel (Optional)
+Generate an Excel file with reviewer stats:
+```bash
+python view_reviewer_data_excel.py
+```` 
+By following the steps above, you can set up your environment, initialize the database, fetch PR data, analyze reviewers, and optionally reset or export data.
+
+---
 
 ## Contributing
 Contributions, bug reports, and feature requests are welcome!  
