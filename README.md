@@ -128,7 +128,7 @@ file = pr_data.db
 
 ---
 
-###ml_pm2_spda_fav_fs_t15_rr.py
+### ml_pm2_spda_fav_fs_t15_rr.py
 - **Purpose:** A script that queries `pr_data.db` and ranks the top 15 reviewers based on:
  - Matching file paths/tags,
  - “Favorite” reviewer points (feedback),
