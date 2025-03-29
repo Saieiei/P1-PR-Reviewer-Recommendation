@@ -59,10 +59,33 @@ def update_feedback_for_reviewer(reviewer_name, increment=1, db_path="pr_data.db
 
 # --- Existing Functions (unchanged) ---
 
+def flatten_patterns(possible_patterns):
+    """
+    Recursively flattens nested patterns from YAML so that only strings are returned.
+    e.g. a string stays a string,
+         a list becomes multiple strings (or more nested lists/dicts to flatten),
+         a dict is traversed until we find strings.
+    """
+    results = []
+    if isinstance(possible_patterns, str):
+        # If it's already a string, just add it
+        results.append(possible_patterns)
+    elif isinstance(possible_patterns, dict):
+        # If it's a dict, flatten each value
+        for val in possible_patterns.values():
+            results.extend(flatten_patterns(val))
+    elif isinstance(possible_patterns, list):
+        # If it's a list, flatten each element
+        for item in possible_patterns:
+            results.extend(flatten_patterns(item))
+    # Otherwise, ignore (not a str/list/dict)
+    return results
+
 def update_missing_labels(db_path="pr_data.db", yaml_path="new-prs-labeler.yml"):
     """
     For each PR with missing labels (NULL or empty), determine the labels to assign
     based on file paths using a YAML mapping file, and update the database.
+    This version flattens nested YAML entries so only string patterns get passed to fnmatch.
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -71,22 +94,33 @@ def update_missing_labels(db_path="pr_data.db", yaml_path="new-prs-labeler.yml")
     if not pr_rows:
         conn.close()
         return
+
     with open(yaml_path, 'r') as f:
         label_mapping = yaml.safe_load(f)
+
     for pr_id, _ in pr_rows:
         cursor.execute("SELECT file_path FROM pr_files WHERE pr_id = ?", (pr_id,))
         file_rows = cursor.fetchall()
-        file_paths = [row[0] for row in file_rows if row[0]]
+        # Only include non-empty string file paths
+        file_paths = [row[0] for row in file_rows if isinstance(row[0], str) and row[0].strip()]
+        
         matched_labels = set()
         for label, patterns in label_mapping.items():
-            for pattern in patterns:
+            # Flatten any nested dicts/lists to obtain a list of strings
+            all_string_patterns = flatten_patterns(patterns)
+            
+            # Perform fnmatch on each string pattern
+            for pattern in all_string_patterns:
                 for file_path in file_paths:
                     if fnmatch.fnmatch(file_path, pattern):
                         matched_labels.add(label)
                         break
+        
+        # Update if we found any matching labels
         if matched_labels:
             new_labels = ", ".join(sorted(matched_labels))
             cursor.execute("UPDATE pull_requests SET labels = ? WHERE pr_id = ?", (new_labels, pr_id))
+
     conn.commit()
     conn.close()
 
