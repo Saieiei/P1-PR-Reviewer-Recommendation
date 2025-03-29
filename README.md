@@ -100,7 +100,7 @@ file = pr_data.db
   - **reviews:** (`pr_id`, `reviewe`, `review_date`, `state`)
   - **feedback:** (`reviewer`, `fav_rev_points`) — tracks user feedback points.
 
-This file is generated and updated by the scripts. If it doesn’t exist, it will be created automatically.
+  This file is generated and updated by the scripts. If it doesn’t exist, it will be created automatically.
 
 ---
 
@@ -112,7 +112,7 @@ This file is generated and updated by the scripts. If it doesn’t exist, it wil
   ```bash
   python store_prs2.py
   ```
-Ensures the database is populated with up-to-date pull request information.
+  Ensures the database is populated with up-to-date pull request information.
 
 ---
 
