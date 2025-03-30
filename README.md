@@ -1,6 +1,6 @@
 # PR Reviewer Recommendation System
 
-This repository offers an automated approach to managing and analyzing GitHub pull requests: it collects data (files, reviews, labels) in an SQLite database, assigns missing labels via file path patterns, ranks possible reviewers using historical data and feedback points, and enables users to update reviewer “favorite” points—thus streamlining PR management and encouraging quality reviews. The main purpose of this repository is to make PR handling more efficient and data-driven, reducing manual labeling effort and helping identify the best reviewers for each pull request.
+This repository offers an automated approach to managing and analyzing GitHub pull requests to suggest the top 15 reviewers: it collects data (files, reviews, labels) in an SQLite database, assigns missing labels via file path patterns, ranks possible reviewers using historical data and feedback points, and enables users to update reviewer “favorite” points—thus streamlining PR management and encouraging quality reviews. The main purpose of this repository is to make PR handling more efficient and data-driven, reducing manual labeling effort and helping identify the best reviewers for each pull request.
 
 This repository provides a set of scripts and GitHub Actions workflows to:
 1. Store pull request data (PRs, files, and reviews) in a local SQLite database.
