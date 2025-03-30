@@ -14,6 +14,7 @@ Below you’ll find an overview of each file’s purpose, as well as how to set 
 ---
 
 ## Table of Contents
+- [Installation](#installation)
 - [Configuration File](#configuration-file)
   - [config.ini](#configini)
 - [Database Reset Script](#database-reset-script)
@@ -40,6 +41,38 @@ Below you’ll find an overview of each file’s purpose, as well as how to set 
 - [Excel Export](#excel-export)
 - [Additional Notes](#additional-notes)
 
+---
+
+## Installation
+
+Before running any scripts, ensure you have Python 3.7+ installed. We recommend creating a virtual environment:
+
+```bash
+# Create a virtual environment named "venv"
+python -m venv venv
+
+# Activate the virtual environment on Unix or macOS:
+source venv/bin/activate
+
+# On Windows (Command Prompt):
+venv\Scripts\activate
+
+# On Windows (PowerShell):
+venv\Scripts\Activate.ps1
+```
+Then, install the required dependencies using pip:
+
+```bash
+pip install -r requirements.txt
+```
+An example `requirements.txt` might look like this:
+
+```txt
+PyGithub>=1.55
+pandas>=1.3
+openpyxl>=3.0
+requests>=2.25
+```
 ---
 
 ## Configuration File
