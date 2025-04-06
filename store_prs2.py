@@ -85,8 +85,8 @@ def fetch_prs_in_range(token, owner, repo,
     session.verify = verify_ssl
 
     retries = Retry(
-        total=10,
-        backoff_factor=1,
+        total=3,             # Try fewer times
+        backoff_factor=0.5,  # Shorter delay between retries
         status_forcelist=[502, 503, 504],
         allowed_methods=["GET"]
     )
@@ -98,6 +98,8 @@ def fetch_prs_in_range(token, owner, repo,
     per_page = 100
 
     while True:
+        print(f"Fetching page {page} of pull requests...")
+
         url = f"https://api.github.com/repos/{owner}/{repo}/pulls"
         pr_state = "closed" if only_closed else "all"
         params = {
@@ -117,8 +119,12 @@ def fetch_prs_in_range(token, owner, repo,
 
         pr_page = resp.json()
         if not pr_page:
+            print("No more PRs found.")
             break
 
+        print(f"Retrieved {len(pr_page)} PR(s) on page {page}.")
+
+        processed_this_page = False
         for pr in pr_page:
             created_str = pr.get("created_at", "")
             if not created_str:
@@ -129,7 +135,6 @@ def fetch_prs_in_range(token, owner, repo,
             if created_dt > end_date:
                 continue
             elif created_dt < start_date:
-                # Because results are in descending order, we can stop
                 break
 
             # Filter by labels if required_labels is not empty
@@ -140,12 +145,13 @@ def fetch_prs_in_range(token, owner, repo,
                     continue
 
             all_prs.append(pr)
-        else:
-            # Only reached if the for-loop didn't break
-            page += 1
-            continue
-        break  # if the for-loop did break, we end the while-loop
+            processed_this_page = True
 
+        if not processed_this_page:
+            break
+        page += 1
+
+    print(f"Done fetching PRs: total {len(all_prs)} in range.")
     return all_prs
 
 def fetch_pr_main_details(token, owner, repo, pr_number, verify_ssl=True):
@@ -182,8 +188,8 @@ def fetch_commits_for_pr(token, owner, repo, pr_number, verify_ssl=True):
     session.verify = verify_ssl
 
     retries = Retry(
-        total=10,
-        backoff_factor=1,
+        total=3,
+        backoff_factor=0.5,
         status_forcelist=[502, 503, 504],
         allowed_methods=["GET"]
     )
@@ -195,6 +201,7 @@ def fetch_commits_for_pr(token, owner, repo, pr_number, verify_ssl=True):
     per_page = 100
 
     while True:
+        print(f"  Fetching commits page {page} for PR #{pr_number}...")
         params = {"per_page": per_page, "page": page}
         try:
             r = session.get(commits_url, params=params, timeout=30)
@@ -205,13 +212,16 @@ def fetch_commits_for_pr(token, owner, repo, pr_number, verify_ssl=True):
 
         commit_page = r.json()
         if not commit_page:
+            print(f"  No more commits for PR #{pr_number}.")
             break
 
         all_commits.extend(commit_page)
         if len(commit_page) < per_page:
+            print(f"  Reached last page of commits for PR #{pr_number}.")
             break
         page += 1
 
+    print(f"  Total commits fetched for PR #{pr_number}: {len(all_commits)}.")
     return all_commits
 
 def fetch_pr_details(token, owner, repo, pr_number, verify_ssl=True):
@@ -226,8 +236,8 @@ def fetch_pr_details(token, owner, repo, pr_number, verify_ssl=True):
     session.verify = verify_ssl
 
     retries = Retry(
-        total=10,
-        backoff_factor=1,
+        total=3,
+        backoff_factor=0.5,
         status_forcelist=[502, 503, 504],
         allowed_methods=["GET"]
     )
@@ -240,6 +250,7 @@ def fetch_pr_details(token, owner, repo, pr_number, verify_ssl=True):
     page = 1
     per_page = 100
     while True:
+        print(f"  Fetching files page {page} for PR #{pr_number}...")
         params = {"per_page": per_page, "page": page}
         try:
             r = session.get(files_url, params=params, timeout=30)
@@ -250,10 +261,12 @@ def fetch_pr_details(token, owner, repo, pr_number, verify_ssl=True):
 
         file_page = r.json()
         if not file_page:
+            print(f"  No more files for PR #{pr_number}.")
             break
 
         all_files.extend(file_page)
         if len(file_page) < per_page:
+            print(f"  Reached last page of files for PR #{pr_number}.")
             break
         page += 1
 
@@ -262,6 +275,7 @@ def fetch_pr_details(token, owner, repo, pr_number, verify_ssl=True):
     all_reviews = []
     page = 1
     while True:
+        print(f"  Fetching reviews page {page} for PR #{pr_number}...")
         params = {"per_page": per_page, "page": page}
         try:
             r = session.get(reviews_url, params=params, timeout=30)
@@ -272,13 +286,16 @@ def fetch_pr_details(token, owner, repo, pr_number, verify_ssl=True):
 
         review_page = r.json()
         if not review_page:
+            print(f"  No more reviews for PR #{pr_number}.")
             break
 
         all_reviews.extend(review_page)
         if len(review_page) < per_page:
+            print(f"  Reached last page of reviews for PR #{pr_number}.")
             break
         page += 1
 
+    print(f"  Finished fetching files and reviews for PR #{pr_number}.")
     return all_files, all_reviews
 
 def insert_data_into_db(conn, pr_list, token, owner, repo,
@@ -288,15 +305,19 @@ def insert_data_into_db(conn, pr_list, token, owner, repo,
     Then insert PR details, commit authors, changed file paths, and reviews into the DB.
     """
     cursor = conn.cursor()
-
-    for pr in pr_list:
+    total_prs = len(pr_list)
+    
+    for idx, pr in enumerate(pr_list, start=1):
         pr_number = pr["number"]
+        print(f"\nProcessing PR #{pr_number} ({idx}/{total_prs}) ...")
+
         main_pr_data = fetch_pr_main_details(token, owner, repo, pr_number, verify_ssl)
         if not main_pr_data:
+            print(f"Skipping PR #{pr_number} due to missing main data.")
             continue
 
-        # If config says "only_merged_prs" and merged is false, skip
         if only_merged_prs and not main_pr_data.get("merged", False):
+            print(f"PR #{pr_number} is not merged. Skipping because only_merged_prs is set.")
             continue
 
         pr_title = main_pr_data.get("title", "")
@@ -309,36 +330,29 @@ def insert_data_into_db(conn, pr_list, token, owner, repo,
         created_at = main_pr_data.get("created_at", "")
         updated_at = main_pr_data.get("updated_at", "")
 
-        # Insert into pull_requests
         cursor.execute("""
             INSERT OR IGNORE INTO pull_requests (pr_id, title, user_login, labels, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, ?)
         """, (pr_number, pr_title, user_login, labels_str, created_at, updated_at))
 
-        # 1) Fetch commits (store authors in reviews table as "COMMIT")
         commits_data = fetch_commits_for_pr(token, owner, repo, pr_number, verify_ssl)
         for commit_obj in commits_data:
             commit_author_login = None
             if commit_obj.get("author"):
                 commit_author_login = commit_obj["author"].get("login", None)
-
             if commit_author_login:
                 cursor.execute("""
                     INSERT INTO reviews (pr_id, reviewer, review_date, state)
                     VALUES (?, ?, ?, ?)
                 """, (pr_number, commit_author_login, "", "COMMIT"))
 
-        # 2) Fetch PR files & PR reviews
         files_data, reviews_data = fetch_pr_details(token, owner, repo, pr_number, verify_ssl=verify_ssl)
-
-        # Insert file paths
         for f in files_data:
             file_path = f.get("filename", "")
             cursor.execute("""
                 INSERT OR IGNORE INTO pr_files (pr_id, file_path) VALUES (?, ?)
             """, (pr_number, file_path))
 
-        # Insert reviews (only final states, skip PENDING)
         for rv in reviews_data:
             state = rv.get("state", "").upper()
             reviewer = rv["user"]["login"] if rv.get("user") else "unknown"
@@ -349,7 +363,8 @@ def insert_data_into_db(conn, pr_list, token, owner, repo,
                     VALUES (?, ?, ?, ?)
                 """, (pr_number, reviewer, review_date, state))
 
-    conn.commit()
+        conn.commit()
+        print(f"Finished inserting data for PR #{pr_number}.")
 
 def main():
     """
@@ -357,12 +372,9 @@ def main():
       1) Load config (token, owner, repo, date filters, etc.)
       2) Connect to SQLite DB and ensure tables exist
       3) Fetch PRs within date range
-      4) Insert all relevant PR data into DB
+      4) Print total PRs fetched and then insert all relevant PR data into DB
     """
-    # 1) Load config
     config = load_config("config.ini")
-
-    # 2) Extract config values
     GITHUB_TOKEN = config["github"]["token"].strip()
     OWNER = config["github"]["owner"].strip()
     REPO = config["github"]["repo"].strip()
@@ -370,31 +382,22 @@ def main():
     start_date = config["filters"]["start_date"].strip()
     end_date   = config["filters"]["end_date"].strip()
 
-    # only_closed_prs from config
     only_closed_prs = config["filters"].getboolean("only_closed_prs")
-
-    # only_merged_prs (new param, default to True if not in config)
     if "only_merged_prs" in config["filters"]:
         only_merged_prs = config["filters"].getboolean("only_merged_prs")
     else:
         only_merged_prs = True
 
     required_labels = [
-        lbl.strip()
-        for lbl in config["filters"]["required_labels"].split(",")
-        if lbl.strip()
+        lbl.strip() for lbl in config["filters"]["required_labels"].split(",") if lbl.strip()
     ]
 
-    # 3) Database location
     DATABASE_FILE = config["database"]["file"].strip()
 
-    # 4) Connect to DB and create tables
     conn = sqlite3.connect(DATABASE_FILE)
     create_tables_if_needed(conn)
 
-    print(f"Fetching PRs from {start_date} to {end_date}, "
-          f"only_closed={only_closed_prs}, labels={required_labels} ...")
-
+    print(f"Fetching PRs from {start_date} to {end_date}, only_closed={only_closed_prs}, labels={required_labels} ...")
     pr_list = fetch_prs_in_range(
         token=GITHUB_TOKEN,
         owner=OWNER,
@@ -405,9 +408,10 @@ def main():
         required_labels=required_labels,
         verify_ssl=True
     )
-    print(f"Found {len(pr_list)} PRs matching date/label filters (closed={only_closed_prs}).")
 
+    print(f"Found {len(pr_list)} PRs matching date/label filters (closed={only_closed_prs}).")
     print(f"Storing data (only_merged_prs={only_merged_prs}) into the database...")
+
     insert_data_into_db(
         conn=conn,
         pr_list=pr_list,
