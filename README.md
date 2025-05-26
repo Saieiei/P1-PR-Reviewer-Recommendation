@@ -300,7 +300,8 @@ This queries the DB for the reviewer’s PRs, merges label/file data, and writes
 
 ---
 ## Demo
-https://github.com/user-attachments/assets/f90b9473-ffb4-4d7a-a313-174ed3a570fb
+https://github.com/user-attachments/assets/39e2372a-a250-48a1-8e70-154ee2c841f2
+
 ---
 
 > **Note**: For security reasons, never commit real API tokens or other sensitive credentials to a public repository. Make sure to remove or invalidate any shared tokens (like `ghp_xxx`) before pushing your work to GitHub.
