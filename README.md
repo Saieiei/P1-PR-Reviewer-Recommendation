@@ -40,6 +40,7 @@ Below you’ll find an overview of each file’s purpose, as well as how to set 
 - [Feedback and Points](#feedback-and-points)
 - [Excel Export](#excel-export)
 - [Additional Notes](#additional-notes)
+- [Demo](#Demo)
 
 ---
 
@@ -296,6 +297,9 @@ This queries the DB for the reviewer’s PRs, merges label/file data, and writes
 - Keep your GitHub token private.
 - To update label → file path mappings, edit `new-prs-labeler.yml`.
 - You can manually run `recommendation.py` if you supply environment variables for GitHub (e.g., `GITHUB_TOKEN`). Typically, though, it’s triggered by `.github/workflows/post_recommendations.yml`.
+
+---
+## Demo
 
 ---
 
